@@ -333,9 +333,21 @@ function connectGemini(token) {
       }));
     };
 
-    socket.onmessage = async (event) => {
+    
+socket.onmessage = async (event) => {
 
-      const data = JSON.parse(event.data);
+  let message = event.data;
+
+  if (message instanceof Blob) {
+    message = await message.text();
+  }
+
+  if (message instanceof ArrayBuffer) {
+    message = new TextDecoder().decode(message);
+  }
+
+  const data = JSON.parse(message);
+
 
       if (data.setupComplete) {
         setStatus("연결 완료! 편하게 이야기하세요 😊");
