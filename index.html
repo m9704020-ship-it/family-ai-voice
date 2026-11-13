@@ -1,0 +1,539 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>우리 가족 AI 친구</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: Arial, sans-serif;
+      background: #f1f5f9;
+      color: #243047;
+    }
+
+    .container {
+      max-width: 650px;
+      margin: 40px auto;
+      padding: 32px;
+      background: white;
+      border-radius: 24px;
+      box-shadow: 0 8px 30px #00000012;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 27px;
+      margin-bottom: 10px;
+    }
+
+    .description {
+      color: #64748b;
+      line-height: 1.7;
+    }
+
+    .character {
+      font-size: 75px;
+      margin: 25px 0;
+    }
+
+    .status {
+      padding: 15px;
+      border-radius: 12px;
+      background: #eff6ff;
+      color: #2563eb;
+      margin: 20px 0;
+    }
+
+    button {
+      border: 0;
+      border-radius: 14px;
+      padding: 15px 25px;
+      margin: 7px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #startButton {
+      background: #2563eb;
+      color: white;
+    }
+
+    #stopButton {
+      background: #e2e8f0;
+      color: #334155;
+    }
+
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .conversation {
+      text-align: left;
+      margin-top: 25px;
+      padding: 18px;
+      min-height: 150px;
+      background: #f8fafc;
+      border-radius: 14px;
+      white-space: pre-wrap;
+      line-height: 1.8;
+      overflow-wrap: anywhere;
+    }
+
+    .notice {
+      font-size: 13px;
+      color: #94a3b8;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+
+    <h1>우리 가족 AI 친구</h1>
+
+    <div class="description">
+      언제든 편하게 이야기할 수 있는<br>
+      우리 가족만의 따뜻한 AI 친구입니다.
+    </div>
+
+    <div class="character">🤖</div>
+
+    <div id="status" class="status">
+      음성 연결 준비 완료
+    </div>
+
+    <button id="startButton">
+      🎙️ 대화 시작
+    </button>
+
+    <button id="stopButton" disabled>
+      ⏹️ 대화 종료
+    </button>
+
+    <div class="conversation" id="conversation">
+      대화 내용이 여기에 표시됩니다.
+    </div>
+
+    <div class="notice">
+      마이크 사용 권한을 허용해 주세요.
+    </div>
+
+  </div>
+
+<script>
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxT7Aar_8GmKmG78MF--Z_ZPo20V4J4O7Sjn5CHCPkkFi6scPXaCirnbPgz6NwU8GFv/exec";
+
+const MODEL = "gemini-3.8-live";
+
+let socket = null;
+let audioContext = null;
+let microphoneStream = null;
+let processor = null;
+let microphoneSource = null;
+
+let nextPlayTime = 0;
+let isRunning = false;
+
+const statusElement = document.getElementById("status");
+const conversationElement = document.getElementById("conversation");
+const startButton = document.getElementById("startButton");
+const stopButton = document.getElementById("stopButton");
+
+function setStatus(message) {
+  statusElement.textContent = message;
+}
+
+function addConversation(message) {
+  conversationElement.textContent += "\n" + message;
+  conversationElement.scrollTop =
+    conversationElement.scrollHeight;
+}
+
+function getToken() {
+  return new Promise((resolve, reject) => {
+    const callbackName =
+      "geminiTokenCallback_" + Date.now();
+
+    const script = document.createElement("script");
+
+    const timeout = setTimeout(() => {
+      cleanup();
+      reject(new Error("인증 토큰 요청 시간 초과"));
+    }, 15000);
+
+    function cleanup() {
+      clearTimeout(timeout);
+      delete window[callbackName];
+      script.remove();
+    }
+
+    window[callbackName] = (result) => {
+      cleanup();
+
+      if (!result || !result.token) {
+        reject(new Error("인증 토큰을 받지 못했습니다."));
+        return;
+      }
+
+      resolve(result.token);
+    };
+
+    script.onerror = () => {
+      cleanup();
+      reject(new Error("인증 서버 연결 실패"));
+    };
+
+    script.src =
+      GAS_URL +
+      "?action=token&callback=" +
+      callbackName;
+
+    document.body.appendChild(script);
+  });
+}
+
+function floatToPCM16(float32) {
+  const output = new Int16Array(float32.length);
+
+  for (let i = 0; i < float32.length; i++) {
+    const sample = Math.max(-1, Math.min(1, float32[i]));
+
+    output[i] =
+      sample < 0
+        ? sample * 32768
+        : sample * 32767;
+  }
+
+  return output;
+}
+
+function downsample(input, inputRate, outputRate) {
+  if (inputRate === outputRate) return input;
+
+  const ratio = inputRate / outputRate;
+  const outputLength = Math.floor(input.length / ratio);
+  const output = new Float32Array(outputLength);
+
+  for (let i = 0; i < outputLength; i++) {
+    const position = i * ratio;
+    const left = Math.floor(position);
+    const right = Math.min(left + 1, input.length - 1);
+    const fraction = position - left;
+
+    output[i] =
+      input[left] * (1 - fraction) +
+      input[right] * fraction;
+  }
+
+  return output;
+}
+
+function arrayBufferToBase64(buffer) {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+
+  return btoa(binary);
+}
+
+function base64ToArrayBuffer(base64) {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+
+  return bytes.buffer;
+}
+
+function playAudio(base64) {
+  if (!audioContext) return;
+
+  const pcmBuffer = base64ToArrayBuffer(base64);
+  const pcm = new Int16Array(pcmBuffer);
+
+  const audioBuffer =
+    audioContext.createBuffer(
+      1,
+      pcm.length,
+      24000
+    );
+
+  const channel = audioBuffer.getChannelData(0);
+
+  for (let i = 0; i < pcm.length; i++) {
+    channel[i] = pcm[i] / 32768;
+  }
+
+  const source = audioContext.createBufferSource();
+
+  source.buffer = audioBuffer;
+  source.connect(audioContext.destination);
+
+  const startTime = Math.max(
+    audioContext.currentTime,
+    nextPlayTime
+  );
+
+  source.start(startTime);
+
+  nextPlayTime = startTime + audioBuffer.duration;
+}
+
+function connectGemini(token) {
+  return new Promise((resolve, reject) => {
+
+    const url =
+      "wss://generativelanguage.googleapis.com/ws/" +
+      "google.ai.generativelanguage.v1beta." +
+      "GenerativeService.BidiGenerateContentConstrained" +
+      "?access_token=" + encodeURIComponent(token);
+
+    socket = new WebSocket(url);
+
+    socket.onopen = () => {
+
+      socket.send(JSON.stringify({
+        setup: {
+          model: "models/" + MODEL,
+
+          generationConfig: {
+            responseModalities: ["AUDIO"]
+          },
+
+          systemInstruction: {
+            parts: [{
+              text:
+                "당신은 우리 가족의 따뜻하고 친근한 AI 친구입니다. " +
+                "한국어로 자연스럽게 대화하세요. " +
+                "창화, 여은, 윤이와 다정하고 편안하게 이야기하세요. " +
+                "상대방의 말을 잘 듣고 짧고 자연스럽게 답변하세요."
+            }]
+          },
+
+          inputAudioTranscription: {},
+          outputAudioTranscription: {}
+        }
+      }));
+    };
+
+    socket.onmessage = async (event) => {
+
+      const data = JSON.parse(event.data);
+
+      if (data.setupComplete) {
+        setStatus("연결 완료! 편하게 이야기하세요 😊");
+        resolve();
+      }
+
+      const serverContent = data.serverContent;
+
+      if (serverContent) {
+
+        if (serverContent.inputTranscription?.text) {
+          addConversation(
+            "나: " + serverContent.inputTranscription.text
+          );
+        }
+
+        if (serverContent.outputTranscription?.text) {
+          addConversation(
+            "AI: " + serverContent.outputTranscription.text
+          );
+        }
+
+        const parts =
+          serverContent.modelTurn?.parts || [];
+
+        for (const part of parts) {
+          if (part.inlineData?.data) {
+            playAudio(part.inlineData.data);
+          }
+        }
+
+        if (serverContent.turnComplete) {
+          setStatus("듣고 있어요. 계속 이야기해 주세요.");
+        }
+      }
+
+      if (data.error) {
+        reject(new Error(
+          data.error.message || "Gemini 연결 오류"
+        ));
+      }
+    };
+
+    socket.onerror = () => {
+      reject(new Error("음성 서버 연결 오류"));
+    };
+
+    socket.onclose = () => {
+      if (isRunning) {
+        setStatus("연결이 종료되었습니다.");
+      }
+    };
+  });
+}
+
+async function startMicrophone() {
+
+  microphoneStream =
+    await navigator.mediaDevices.getUserMedia({
+      audio: {
+        channelCount: 1,
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true
+      }
+    });
+
+  microphoneSource =
+    audioContext.createMediaStreamSource(
+      microphoneStream
+    );
+
+  processor =
+    audioContext.createScriptProcessor(
+      4096, 1, 1
+    );
+
+  processor.onaudioprocess = (event) => {
+
+    if (
+      !socket ||
+      socket.readyState !== WebSocket.OPEN ||
+      !isRunning
+    ) return;
+
+    const input =
+      event.inputBuffer.getChannelData(0);
+
+    const reduced =
+      downsample(
+        input,
+        audioContext.sampleRate,
+        16000
+      );
+
+    const pcm = floatToPCM16(reduced);
+
+    socket.send(JSON.stringify({
+      realtimeInput: {
+        audio: {
+          mimeType: "audio/pcm;rate=16000",
+          data: arrayBufferToBase64(pcm.buffer)
+        }
+      }
+    }));
+  };
+
+  microphoneSource.connect(processor);
+  processor.connect(audioContext.destination);
+}
+
+async function startConversation() {
+
+  try {
+
+    startButton.disabled = true;
+    setStatus("인증 토큰 확인 중...");
+
+    audioContext = new AudioContext();
+
+    await audioContext.resume();
+
+    const token = await getToken();
+
+    setStatus("Gemini 음성 서버 연결 중...");
+
+    await connectGemini(token);
+
+    isRunning = true;
+
+    await startMicrophone();
+
+    startButton.disabled = true;
+    stopButton.disabled = false;
+
+    addConversation("🎙️ 대화를 시작했습니다.");
+
+  } catch (error) {
+
+    console.error(error);
+
+    setStatus("연결 오류: " + error.message);
+
+    stopConversation();
+
+  }
+}
+
+function stopConversation() {
+
+  isRunning = false;
+
+  if (processor) {
+    processor.disconnect();
+    processor = null;
+  }
+
+  if (microphoneSource) {
+    microphoneSource.disconnect();
+    microphoneSource = null;
+  }
+
+  if (microphoneStream) {
+    microphoneStream.getTracks().forEach(
+      track => track.stop()
+    );
+    microphoneStream = null;
+  }
+
+  if (socket) {
+    socket.close();
+    socket = null;
+  }
+
+  if (audioContext) {
+    audioContext.close();
+    audioContext = null;
+  }
+
+  nextPlayTime = 0;
+
+  startButton.disabled = false;
+  stopButton.disabled = true;
+
+  setStatus("대화가 종료되었습니다.");
+}
+
+startButton.addEventListener(
+  "click",
+  startConversation
+);
+
+stopButton.addEventListener(
+  "click",
+  stopConversation
+);
+
+</script>
+
+</body>
+</html>
