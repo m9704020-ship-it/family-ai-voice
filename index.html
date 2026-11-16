@@ -43,13 +43,23 @@
   margin: 25px 0;
 }
 
-.character img {
+..character img {
   width: 240px;
   max-width: 85%;
   height: auto;
   display: block;
   margin: 0 auto;
   border-radius: 18px;
+  animation: daonFloat 2.5s ease-in-out infinite;
+}
+
+@keyframes daonFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
 }
 
     .status {
