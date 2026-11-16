@@ -170,27 +170,14 @@ const statusElement = document.getElementById("status");
 const conversationElement = document.getElementById("conversation");
 const startButton = document.getElementById("startButton");
 const stopButton = document.getElementById("stopButton");
-  // 가족 플래너 일정 수신
-let familyScheduleContext = null;
-let familyScheduleReady = false;
-window.addEventListener("message", (event) => {
-  if (!window.opener || event.source !== window.opener) return;
-
-  const message = event.data;
-
-  if (!message || message.type !== "FAMILY_PLANNER_DATA") return;
-
-  familyScheduleContext = message.data;
-
-  console.log("가족 플래너 일정 수신 완료:", familyScheduleContext);
-});
-// 가족 플래너에서 전달받은 일정
+ 
+// 가족 플래너 일정 수신
 let familyScheduleContext = "";
+let familyScheduleReady = false;
 
 window.addEventListener("message", (event) => {
 
-  // 플래너 창에서 전달된 메시지만 허용
-  if (event.source !== window.opener) return;
+  if (!window.opener || event.source !== window.opener) return;
 
   const trustedOrigin =
     event.origin === "https://script.google.com" ||
@@ -203,12 +190,13 @@ window.addEventListener("message", (event) => {
     event.data.type !== "FAMILY_PLANNER_DATA"
   ) return;
 
-  familyScheduleContext =
-    JSON.stringify(event.data.payload);
-familyScheduleReady = true;
-  setStatus("가족 플래너 연결 완료! 😊");
+  familyScheduleContext = JSON.stringify(event.data.payload);
+  familyScheduleReady = true;
 
+  console.log("가족 플래너 일정 수신 완료:", familyScheduleContext);
+  setStatus("가족 플래너 연결 완료! 😊");
 });
+ 
 
 // 가족 플래너에 연결 준비 완료 신호 보내기
 window.addEventListener("load", () => {
