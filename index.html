@@ -209,15 +209,36 @@ familyScheduleReady = true;
   setStatus("가족 플래너 연결 완료! 😊");
 
 });
-  // 가족 플래너에 연결 준비 완료 신호 보내기
+
+// 가족 플래너에 연결 준비 완료 신호 보내기
 window.addEventListener("load", () => {
-  if (window.opener) {
+
+  if (!window.opener) {
+    console.log("가족 플래너 창을 찾을 수 없습니다.");
+    return;
+  }
+
+  let count = 0;
+
+  const sendReady = () => {
     window.opener.postMessage(
       { type: "DAON_READY" },
       "*"
     );
-  }
+
+    count++;
+
+    if (count >= 20) {
+      clearInterval(readyTimer);
+    }
+  };
+
+  sendReady();
+
+  const readyTimer = setInterval(sendReady, 500);
+
 });
+
 function setStatus(message) {
   statusElement.textContent = message;
 }
