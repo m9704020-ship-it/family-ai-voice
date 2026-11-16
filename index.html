@@ -442,7 +442,13 @@ text:
   "일정을 단순히 나열하기보다 가족이 이해하기 쉽게 자연스럽게 설명하세요. " +
 "날씨를 물어보면 반드시 get_weather 기능을 사용하여 실제 날씨를 확인하세요. " +
 "기본 날씨 조회 지역은 부산 사하구 다대동입니다. " +
-"조회한 기온, 체감온도, 습도, 강수량, 풍속을 이해하기 쉽게 한국어로 설명하세요. " 
+"조회한 기온, 체감온도, 습도, 강수량, 풍속을 이해하기 쉽게 한국어로 설명하세요. " +
+
+"오늘이나 현재 날씨를 물으면 current 데이터를 사용하세요. " +
+"내일, 주말, 토요일, 일요일 날씨를 물으면 weekendForecast 데이터를 확인하세요. " +
+"주말 날씨를 질문하면 토요일과 일요일의 최고기온, 최저기온, 강수확률, 강수량, 풍속을 구분해서 알려주세요. " +
+"현재 날씨와 미래 예보를 혼동하지 마세요. " +
+"예보 데이터에 없는 내용은 추측하지 마세요. "
             }]
           },
 tools: [{
@@ -557,7 +563,17 @@ longitude: 128.97138
               humidity: weatherData.current.relative_humidity_2m,
               precipitation: weatherData.current.precipitation,
               weatherCode: weatherData.current.weather_code,
-              windSpeed: weatherData.current.wind_speed_10m
+             windSpeed: weatherData.current.wind_speed_10m,
+
+weekendForecast: weatherData.daily.time.map((date, i) => ({
+  date: date,
+  weatherCode: weatherData.daily.weather_code[i],
+  maxTemp: weatherData.daily.temperature_2m_max[i],
+  minTemp: weatherData.daily.temperature_2m_min[i],
+  rainProbability: weatherData.daily.precipitation_probability_max[i],
+  precipitation: weatherData.daily.precipitation_sum[i],
+  maxWindSpeed: weatherData.daily.wind_speed_10m_max[i]
+}))
             }
           }
         });
