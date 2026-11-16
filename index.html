@@ -579,9 +579,7 @@ async function startMicrophone() {
 async function startConversation() {
 
   try {
-if (micNotice) {
-  micNotice.style.display = "none";
-}
+
     if (!familyScheduleReady) {
       setStatus("가족 플래너에서 일정을 받는 중입니다. 잠시 기다려 주세요.");
       startButton.disabled = false;
@@ -605,6 +603,15 @@ if (micNotice) {
     isRunning = true;
 
     await startMicrophone();
+
+if (micNotice) {
+  micNotice.style.display = "none";
+}
+
+startButton.disabled = true;
+stopButton.disabled = false;
+
+addConversation("🎙️ 대화를 시작했습니다.");
 
     startButton.disabled = true;
     stopButton.disabled = false;
