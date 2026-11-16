@@ -193,8 +193,29 @@ window.addEventListener("message", (event) => {
   familyScheduleContext = JSON.stringify(event.data.payload);
   familyScheduleReady = true;
 
-  console.log("가족 플래너 일정 수신 완료:", familyScheduleContext);
-  setStatus("가족 플래너 연결 완료! 😊");
+  console.log("가족 플래너 일정 수신 완료:", event.data.payload);
+
+  const payload = event.data.payload;
+
+  const calendarCount =
+    Array.isArray(payload.calendarEvents)
+      ? payload.calendarEvents.length
+      : 0;
+
+  const personalCount =
+    Array.isArray(payload.items)
+      ? payload.items.length
+      : 0;
+
+  const sharedCount =
+    Array.isArray(payload.shared)
+      ? payload.shared.length
+      : 0;
+
+  setStatus(
+    `가족 일정 수신 완료! 개인 ${personalCount}개 · 공동 ${sharedCount}개 · Google 캘린더 ${calendarCount}개 😊`
+  );
+
 });
  
 
