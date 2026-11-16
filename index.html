@@ -150,7 +150,31 @@ const statusElement = document.getElementById("status");
 const conversationElement = document.getElementById("conversation");
 const startButton = document.getElementById("startButton");
 const stopButton = document.getElementById("stopButton");
+// 가족 플래너에서 전달받은 일정
+let familyScheduleContext = "";
 
+window.addEventListener("message", (event) => {
+
+  // 플래너 창에서 전달된 메시지만 허용
+  if (event.source !== window.opener) return;
+
+  const trustedOrigin =
+    event.origin === "https://script.google.com" ||
+    event.origin.endsWith(".googleusercontent.com");
+
+  if (!trustedOrigin) return;
+
+  if (
+    !event.data ||
+    event.data.type !== "FAMILY_PLANNER_DATA"
+  ) return;
+
+  familyScheduleContext =
+    JSON.stringify(event.data.payload);
+
+  setStatus("가족 플래너 연결 완료! 😊");
+
+});
 function setStatus(message) {
   statusElement.textContent = message;
 }
