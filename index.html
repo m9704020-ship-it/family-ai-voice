@@ -175,6 +175,15 @@ window.addEventListener("message", (event) => {
   setStatus("가족 플래너 연결 완료! 😊");
 
 });
+  // 가족 플래너에 연결 준비 완료 신호 보내기
+window.addEventListener("load", () => {
+  if (window.opener) {
+    window.opener.postMessage(
+      { type: "DAON_READY" },
+      "*"
+    );
+  }
+});
 function setStatus(message) {
   statusElement.textContent = message;
 }
