@@ -172,7 +172,7 @@ const startButton = document.getElementById("startButton");
 const stopButton = document.getElementById("stopButton");
   // 가족 플래너 일정 수신
 let familyScheduleContext = null;
-
+let familyScheduleReady = false;
 window.addEventListener("message", (event) => {
   if (!window.opener || event.source !== window.opener) return;
 
@@ -205,7 +205,7 @@ window.addEventListener("message", (event) => {
 
   familyScheduleContext =
     JSON.stringify(event.data.payload);
-
+familyScheduleReady = true;
   setStatus("가족 플래너 연결 완료! 😊");
 
 });
