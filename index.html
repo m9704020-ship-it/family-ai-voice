@@ -538,7 +538,9 @@ longitude: 128.97138
           "https://api.open-meteo.com/v1/forecast" +
           "?latitude=" + place.latitude +
           "&longitude=" + place.longitude +
-          "&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m" +
+         "&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m" +
+"&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum,wind_speed_10m_max" +
+"&forecast_days=7" +
           "&timezone=Asia%2FSeoul";
 
         const weatherResponse = await fetch(weatherUrl);
