@@ -202,9 +202,11 @@ window.addEventListener("message", (event) => {
 window.addEventListener("load", () => {
 
   if (!window.opener) {
-    console.log("가족 플래너 창을 찾을 수 없습니다.");
-    return;
-  }
+  setStatus("가족 플래너 창을 찾을 수 없습니다. 😢");
+  return;
+}
+
+setStatus("가족 플래너 창 확인 완료! 연결 신호 전송 중...");
 
   let count = 0;
 
