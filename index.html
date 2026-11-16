@@ -505,6 +505,17 @@ if (location.includes("다대동")) {
 longitude: 128.97138
   };
 
+} else if (
+  location.includes("산내면") ||
+  location.includes("아지트")
+) {
+
+  place = {
+    name: "밀양 우리 가족 아지트",
+    latitude: 35.5847727,
+    longitude: 128.968376
+  };
+
 } else {
 
   const geoUrl =
