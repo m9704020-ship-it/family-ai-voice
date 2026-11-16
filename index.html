@@ -170,6 +170,20 @@ const statusElement = document.getElementById("status");
 const conversationElement = document.getElementById("conversation");
 const startButton = document.getElementById("startButton");
 const stopButton = document.getElementById("stopButton");
+  // 가족 플래너 일정 수신
+let familyScheduleContext = null;
+
+window.addEventListener("message", (event) => {
+  if (!window.opener || event.source !== window.opener) return;
+
+  const message = event.data;
+
+  if (!message || message.type !== "FAMILY_PLANNER_DATA") return;
+
+  familyScheduleContext = message.data;
+
+  console.log("가족 플래너 일정 수신 완료:", familyScheduleContext);
+});
 // 가족 플래너에서 전달받은 일정
 let familyScheduleContext = "";
 
