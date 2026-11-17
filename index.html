@@ -436,7 +436,9 @@ function connectGemini(token) {
 
     socket = new WebSocket(url);
 
-    socket.onopen = () => {
+socket.onopen = () => {
+
+      console.log("다온이 WebSocket 연결 성공!");
 
       socket.send(JSON.stringify({
         setup: {
