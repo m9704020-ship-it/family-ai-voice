@@ -490,26 +490,44 @@ text:
             }]
           },
 tools: [{
-  functionDeclarations: [{
-    name: "get_weather",
-    description: "부산 사하구 다대동 또는 사용자가 요청한 지역의 현재 날씨를 조회합니다.",
-    parameters: {
-      type: "OBJECT",
-      properties: {
-        location: {
-          type: "STRING",
-          description: "날씨를 조회할 지역"
-        }
-      },
-      required: ["location"]
+  functionDeclarations: [
+
+    {
+      name: "get_weather",
+      description: "부산 사하구 다대동 또는 사용자가 요청한 지역의 현재 날씨를 조회합니다.",
+      parameters: {
+        type: "OBJECT",
+        properties: {
+          location: {
+            type: "STRING",
+            description: "날씨를 조회할 지역"
+          }
+        },
+        required: ["location"]
+      }
+    },
+
+    {
+      name: "search_tourist_spots",
+      description: "한국관광공사 관광정보를 검색합니다. 가족 나들이, 여행지, 관광명소, 실내외 체험 장소를 추천할 때 사용합니다.",
+      parameters: {
+        type: "OBJECT",
+        properties: {
+          keyword: {
+            type: "STRING",
+            description: "검색할 지역이나 관광 주제. 예: 부산, 밀양, 바다, 박물관"
+          },
+          areaCode: {
+            type: "STRING",
+            description: "지역코드. 모르면 빈 문자열로 입력합니다."
+          }
+        },
+        required: ["keyword"]
+      }
     }
-  }]
+
+  ]
 }],
-          inputAudioTranscription: {},
-          outputAudioTranscription: {}
-        }
-      }));
-    };
 
     
 socket.onmessage = async (event) => {
