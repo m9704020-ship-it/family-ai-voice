@@ -175,6 +175,7 @@ const micNotice = document.getElementById("micNotice");
 let familyScheduleContext = "";
 let familyScheduleReady = false;
 
+
 window.addEventListener("message", (event) => {
 
   if (!window.opener || event.source !== window.opener) return;
@@ -185,10 +186,38 @@ window.addEventListener("message", (event) => {
 
   if (!trustedOrigin) return;
 
-  if (
-    !event.data ||
-    event.data.type !== "FAMILY_PLANNER_DATA"
-  ) return;
+  if (!event.data) return;
+
+  // 1. 관광정보 검색 결과 수신
+  if (event.data.type === "DAON_TOUR_SEARCH_RESULTS") {
+
+    console.log("관광정보 검색 결과 수신:", event.data);
+
+    window.dispatchEvent(
+      new CustomEvent("daon-tour-search-results", {
+        detail: event.data
+      })
+    );
+
+    return;
+  }
+
+  // 2. 관광정보 검색 오류 수신
+  if (event.data.type === "DAON_TOUR_SEARCH_ERROR") {
+
+    console.error("관광정보 검색 오류:", event.data.error);
+
+    window.dispatchEvent(
+      new CustomEvent("daon-tour-search-error", {
+        detail: event.data
+      })
+    );
+
+    return;
+  }
+
+  // 3. 가족 일정 수신
+  if (event.data.type !== "FAMILY_PLANNER_DATA") return;
 
   familyScheduleContext = JSON.stringify(event.data.payload);
   familyScheduleReady = true;
@@ -217,6 +246,7 @@ window.addEventListener("message", (event) => {
   );
 
 });
+
  
 
 // 가족 플래너에 연결 준비 완료 신호 보내기
