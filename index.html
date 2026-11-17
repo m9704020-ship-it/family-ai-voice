@@ -236,9 +236,30 @@ const calendarEventsForAI =
   }));
 
 // Google 캘린더 일정을 가장 먼저 전달
+  // 개인 일정에 실제 날짜 추가 (월요일 = 0)
+const personalItemsForAI = (payload.items || []).map(item => {
+  const [year, month, day] = item.week.split("-").map(Number);
+
+  const date = new Date(Date.UTC(
+    year,
+    month - 1,
+    day + Number(item.day)
+  ));
+
+  const dateKST = [
+    date.getUTCFullYear(),
+    String(date.getUTCMonth() + 1).padStart(2, "0"),
+    String(date.getUTCDate()).padStart(2, "0")
+  ].join("-");
+
+  return {
+    ...item,
+    dateKST: dateKST
+  };
+});
 familyScheduleContext = JSON.stringify({
   "Google 캘린더 일정": calendarEventsForAI,
-  "개인 일정": payload.items || [],
+  "개인 일정": personalItemsForAI,
   "가족 공동 일정": payload.shared || []
 }, null, 2);
 
