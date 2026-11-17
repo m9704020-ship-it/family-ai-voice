@@ -738,7 +738,8 @@ console.error("다온이 날씨 조회 오류:", error);
     }
   }
 
-      if (data.setupComplete) {
+     if (data.setupComplete) {
+        console.log("다온이 Gemini 연결 완료 신호 수신!");
         setStatus("연결 완료! 편하게 이야기하세요 😊");
         resolve();
       }
