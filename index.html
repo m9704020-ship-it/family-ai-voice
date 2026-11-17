@@ -549,7 +549,7 @@ socket.onmessage = async (event) => {
 
   const data = JSON.parse(message);
 // 다온이의 날씨 조회 함수 처리
-if (data.toolCall?.functionCalls) {
+if (data.toolCall && data.toolCall.functionCalls) {
 
   const functionResponses = [];
 
@@ -559,8 +559,7 @@ if (data.toolCall?.functionCalls) {
 
       try {
         const location =
-          call.args?.location || "부산 사하구 다대동";
-
+          (call.args && call.args.location) || "부산 사하구 다대동";
 // 지역 검색
 let place;
 
