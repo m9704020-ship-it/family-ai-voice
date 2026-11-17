@@ -473,24 +473,7 @@ socket.onopen = () => {
 
           systemInstruction: {
             parts: [{
-const today = new Date();
-
-const todayKST = new Date(
-  today.toLocaleString("en-US", {
-    timeZone: "Asia/Seoul"
-  })
-);
-
-const weekdays = [
-  "일요일", "월요일", "화요일",
-  "수요일", "목요일", "금요일", "토요일"
-];
-
-const todayDateText =
-  `${todayKST.getFullYear()}년 ` +
-  `${todayKST.getMonth() + 1}월 ` +
-  `${todayKST.getDate()}일 ` +
-  `${weekdays[todayKST.getDay()]}`;              
+     
 text:
   "당신은 우리 가족의 따뜻하고 친근한 AI 친구 다온입니다. " +
   "한국어로 자연스럽고 다정하게 대화하세요. " +
