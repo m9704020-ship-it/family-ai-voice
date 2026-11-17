@@ -219,8 +219,31 @@ window.addEventListener("message", (event) => {
   // 3. 가족 일정 수신
   if (event.data.type !== "FAMILY_PLANNER_DATA") return;
 
-  familyScheduleContext = JSON.stringify(event.data.payload);
-  familyScheduleReady = true;
+  
+const payload = event.data.payload;
+
+// Google 캘린더 일정을 한국 시간 기준으로 정리
+const calendarEventsForAI =
+  (payload.calendarEvents || []).map(event => ({
+    ...event,
+    dateKST: event.allDay
+      ? new Date(event.start).toLocaleDateString("sv-SE", {
+          timeZone: "Asia/Seoul"
+        })
+      : new Date(event.start).toLocaleString("ko-KR", {
+          timeZone: "Asia/Seoul"
+        })
+  }));
+
+// Google 캘린더 일정을 가장 먼저 전달
+familyScheduleContext = JSON.stringify({
+  "Google 캘린더 일정": calendarEventsForAI,
+  "개인 일정": payload.items || [],
+  "가족 공동 일정": payload.shared || []
+}, null, 2);
+
+familyScheduleReady = true;
+
 
   console.log("가족 플래너 일정 수신 완료:", event.data.payload);
 
