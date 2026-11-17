@@ -644,18 +644,95 @@ console.error("다온이 날씨 조회 오류:", error);
           }
         });
 
+}
+    } else if (call.name === "search_tourist_spots") {
+
+        try {
+
+          const keyword = call.args?.keyword || "";
+          const areaCode = call.args?.areaCode || "";
+
+          if (!keyword.trim()) {
+            throw new Error("검색할 관광지 키워드가 없습니다.");
+          }
+
+          const requestId =
+            Date.now().toString() +
+            Math.random().toString(36).slice(2);
+
+          const results = await new Promise((resolve, reject) => {
+
+            const timeout = setTimeout(() => {
+              cleanup();
+              reject(new Error("관광정보 검색 시간이 초과되었습니다."));
+            }, 30000);
+
+            function cleanup() {
+              clearTimeout(timeout);
+              window.removeEventListener("daon-tour-search-results", onResults);
+              window.removeEventListener("daon-tour-search-error", onError);
+            }
+
+            function onResults(event) {
+              if (event.detail.requestId !== requestId) return;
+              cleanup();
+              resolve(event.detail.results || []);
+            }
+
+            function onError(event) {
+              if (event.detail.requestId !== requestId) return;
+              cleanup();
+              reject(new Error(event.detail.error || "관광정보 검색 실패"));
+            }
+
+            window.addEventListener("daon-tour-search-results", onResults);
+            window.addEventListener("daon-tour-search-error", onError);
+
+            window.opener.postMessage({
+              type: "DAON_TOUR_SEARCH_REQUEST",
+              requestId: requestId,
+              keyword: keyword,
+              areaCode: areaCode
+            }, "https://script.google.com");
+
+          });
+
+          functionResponses.push({
+            id: call.id,
+            name: call.name,
+            response: {
+              result: {
+                keyword: keyword,
+                count: results.length,
+                places: results
+              }
+            }
+          });
+
+        } catch (error) {
+
+          console.error("관광정보 검색 오류:", error);
+
+          functionResponses.push({
+            id: call.id,
+            name: call.name,
+            response: {
+              error: error.message
+            }
+          });
+
+        }
       }
     }
-  }
 
-  if (functionResponses.length > 0) {
-    socket.send(JSON.stringify({
-      toolResponse: {
-        functionResponses: functionResponses
-      }
-    }));
+    if (functionResponses.length > 0) {
+      socket.send(JSON.stringify({
+        toolResponse: {
+          functionResponses: functionResponses
+        }
+      }));
+    }
   }
-}
 
       if (data.setupComplete) {
         setStatus("연결 완료! 편하게 이야기하세요 😊");
