@@ -740,7 +740,7 @@ console.error("다온이 날씨 조회 오류:", error);
 
 }
     } else if (call.name === "search_tourist_spots") {
-
+console.log("다온이 관광정보 검색 기능 호출:", call.args);
         try {
 
           const keyword = call.args?.keyword || "";
