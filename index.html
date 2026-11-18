@@ -818,13 +818,29 @@ console.log("다온이 관광정보 검색 기능 호출:", call.args);
       }
     }
 
-    if (functionResponses.length > 0) {
-      socket.send(JSON.stringify({
-        toolResponse: {
-          functionResponses: functionResponses
-        }
-      }));
-    }
+    
+if (functionResponses.length > 0) {
+
+  if (socket && socket.readyState === WebSocket.OPEN) {
+
+    socket.send(JSON.stringify({
+      toolResponse: {
+        functionResponses: functionResponses
+      }
+    }));
+
+    console.log("다온이 관광정보 검색 결과 Gemini 전달 완료!");
+
+  } else {
+
+    console.error(
+      "Gemini 연결이 종료되어 관광정보 결과를 전달하지 못했습니다.",
+      socket
+    );
+
+  }
+}
+
   }
 
      if (data.setupComplete) {
